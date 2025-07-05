@@ -2,7 +2,9 @@
 
 import { useState } from 'react'
 import { Card } from '@/components/ui/Card'
-import { Phone, Calendar, Clock, DollarSign, Building, User } from 'lucide-react'
+import { Phone, Calendar, Clock, DollarSign, Building, User, AlertCircle, CheckCircle } from 'lucide-react'
+import VapiService from '@/lib/vapi'
+import GeminiService from '@/lib/gemini'
 
 interface BusinessDetails {
   businessName: string
@@ -48,6 +50,12 @@ const SetupForm = () => {
   const [generatedPrompt, setGeneratedPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
+  const [apiKeys, setApiKeys] = useState({
+    vapi: '',
+    gemini: '',
+  })
+  const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const days = [
     { key: 'monday', label: 'Monday' },
@@ -98,56 +106,125 @@ const SetupForm = () => {
   }
 
   const generatePrompt = async () => {
+    if (!apiKeys.gemini) {
+      setError('Please enter your Gemini API key first')
+      return
+    }
+
     setIsGenerating(true)
+    setError('')
+    setSuccess('')
     
-    // Simulate API call to generate prompt
-    setTimeout(() => {
-      const prompt = `You are an AI receptionist for ${businessDetails.businessName}, a ${businessDetails.businessType} business.
-
-Business Details:
-- Business Name: ${businessDetails.businessName}
-- Phone: ${businessDetails.phoneNumber}
-- Email: ${businessDetails.email}
-- Address: ${businessDetails.address}
-- Pricing: ${businessDetails.pricing}
-
-Working Hours:
-${days.map(day => {
-  const hours = businessDetails.workingHours[day.key as keyof typeof businessDetails.workingHours]
-  return `${day.label}: ${hours.open ? `${hours.start} - ${hours.end}` : 'Closed'}`
-}).join('\n')}
-
-Services Offered: ${businessDetails.services.join(', ')}
-
-Special Instructions: ${businessDetails.specialInstructions}
-
-Your role is to:
-1. Greet callers professionally
-2. Collect their name and contact information
-3. Understand their needs and questions
-4. Provide relevant information about services and pricing
-5. Book appointments when requested
-6. Take detailed messages for follow-up
-7. Be polite, helpful, and professional at all times
-
-Always ask for the caller's name and phone number for follow-up purposes.`
+    try {
+      const geminiService = new GeminiService(apiKeys.gemini)
+      const result = await geminiService.generatePrompt(businessDetails)
       
-      setGeneratedPrompt(prompt)
+      setGeneratedPrompt(result.prompt)
+      setSuccess('Prompt generated successfully!')
+    } catch (error) {
+      console.error('Error generating prompt:', error)
+      setError('Failed to generate prompt. Please check your API key and try again.')
+    } finally {
       setIsGenerating(false)
-    }, 2000)
+    }
   }
 
   const testAgent = async () => {
+    if (!apiKeys.vapi || !generatedPrompt) {
+      setError('Please enter your VAPI API key and generate a prompt first')
+      return
+    }
+
     setIsTesting(true)
-    // Simulate testing the agent
-    setTimeout(() => {
+    setError('')
+    setSuccess('')
+    
+    try {
+      const vapiService = new VapiService(apiKeys.vapi)
+      
+      // Create a test agent
+      const agent = await vapiService.createAgent({
+        name: `${businessDetails.businessName} AI Receptionist`,
+        prompt: generatedPrompt,
+        phoneNumber: businessDetails.phoneNumber,
+        businessDetails: {
+          name: businessDetails.businessName,
+          type: businessDetails.businessType,
+          workingHours: businessDetails.workingHours,
+          services: businessDetails.services,
+          pricing: businessDetails.pricing,
+          specialInstructions: businessDetails.specialInstructions,
+        },
+      })
+      
+      setSuccess(`Agent created successfully! Agent ID: ${agent.id}`)
+    } catch (error) {
+      console.error('Error testing agent:', error)
+      setError('Failed to create agent. Please check your API key and try again.')
+    } finally {
       setIsTesting(false)
-      alert('Agent test completed! The AI receptionist is ready to handle calls.')
-    }, 3000)
+    }
   }
 
   return (
     <div className="space-y-6">
+      {/* API Keys Configuration */}
+      <Card className="p-6">
+        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+          <Building className="w-5 h-5 mr-2" />
+          API Configuration
+        </h3>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              VAPI API Key *
+            </label>
+            <input
+              type="password"
+              value={apiKeys.vapi}
+              onChange={(e) => setApiKeys(prev => ({ ...prev, vapi: e.target.value }))}
+              className="input-field"
+              placeholder="Enter your VAPI API key"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Get your key from <a href="https://vapi.ai" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">vapi.ai</a>
+            </p>
+          </div>
+          
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-1">
+              Gemini API Key *
+            </label>
+            <input
+              type="password"
+              value={apiKeys.gemini}
+              onChange={(e) => setApiKeys(prev => ({ ...prev, gemini: e.target.value }))}
+              className="input-field"
+              placeholder="Enter your Gemini API key"
+            />
+            <p className="text-xs text-gray-500 mt-1">
+              Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">Google AI Studio</a>
+            </p>
+          </div>
+        </div>
+      </Card>
+
+      {/* Error/Success Messages */}
+      {error && (
+        <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
+          <AlertCircle className="w-5 h-5 text-red-500" />
+          <span className="text-red-700">{error}</span>
+        </div>
+      )}
+      
+      {success && (
+        <div className="flex items-center space-x-2 p-4 bg-green-50 border border-green-200 rounded-lg">
+          <CheckCircle className="w-5 h-5 text-green-500" />
+          <span className="text-green-700">{success}</span>
+        </div>
+      )}
+
       {/* Business Information */}
       <Card className="p-6">
         <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
@@ -339,7 +416,7 @@ Always ask for the caller's name and phone number for follow-up purposes.`
         
         <button
           onClick={generatePrompt}
-          disabled={isGenerating || !businessDetails.businessName || !businessDetails.businessType}
+          disabled={isGenerating || !businessDetails.businessName || !businessDetails.businessType || !apiKeys.gemini}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? 'Generating...' : 'Generate AI Prompt'}
@@ -360,7 +437,7 @@ Always ask for the caller's name and phone number for follow-up purposes.`
             <div className="mt-4 flex space-x-4">
               <button
                 onClick={testAgent}
-                disabled={isTesting}
+                disabled={isTesting || !apiKeys.vapi}
                 className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isTesting ? 'Testing...' : 'Test AI Agent'}
