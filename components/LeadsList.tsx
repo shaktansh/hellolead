@@ -77,7 +77,7 @@ const LeadsList = () => {
     },
   ]
 
-  const statusColors = {
+  const statusColors: Record<string, string> = {
     new: 'bg-blue-100 text-blue-800',
     contacted: 'bg-yellow-100 text-yellow-800',
     appointment: 'bg-green-100 text-green-800',
@@ -85,7 +85,7 @@ const LeadsList = () => {
     lost: 'bg-red-100 text-red-800',
   }
 
-  const statusLabels = {
+  const statusLabels: Record<string, string> = {
     new: 'New Lead',
     contacted: 'Contacted',
     appointment: 'Appointment Booked',
