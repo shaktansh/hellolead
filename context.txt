@@ -1,0 +1,12 @@
+web app - for business owners who cant setup on vapi, they are loosing inbound leads to voice mail. we are setting up an inbound ai receptionist which will book their appointments and act as their personal receptionist .
+
+plan
+1 create an easy to use ui 3 navigation pages
+ 1 a - analytics
+ 1 b - setup
+ 1 c - leads
+
+2 functionality of setup page
+  business owner enter details of his business like pricing, business name, working hours, any other details
+ 2a a prompt is created by gemini for vapi agent setup
+ 2b that prompt is sent to vapi through its api key and user can  test that agents response.
