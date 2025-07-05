@@ -1,4 +1,6 @@
 // Google Gemini API Integration for Intelligent Prompt Generation
+import { config } from './config'
+
 export interface BusinessDetails {
   businessName: string
   businessType: string
@@ -21,8 +23,11 @@ class GeminiService {
   private apiKey: string
   private baseUrl = 'https://generativelanguage.googleapis.com/v1beta/models/gemini-pro:generateContent'
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey
+  constructor() {
+    this.apiKey = config.GEMINI_API_KEY
+    if (!this.apiKey) {
+      throw new Error('GEMINI_API_KEY is not configured')
+    }
   }
 
   // Generate intelligent prompt based on business details

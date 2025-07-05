@@ -50,10 +50,6 @@ const SetupForm = () => {
   const [generatedPrompt, setGeneratedPrompt] = useState('')
   const [isGenerating, setIsGenerating] = useState(false)
   const [isTesting, setIsTesting] = useState(false)
-  const [apiKeys, setApiKeys] = useState({
-    vapi: '',
-    gemini: '',
-  })
   const [error, setError] = useState('')
   const [success, setSuccess] = useState('')
 
@@ -106,32 +102,27 @@ const SetupForm = () => {
   }
 
   const generatePrompt = async () => {
-    if (!apiKeys.gemini) {
-      setError('Please enter your Gemini API key first')
-      return
-    }
-
     setIsGenerating(true)
     setError('')
     setSuccess('')
     
     try {
-      const geminiService = new GeminiService(apiKeys.gemini)
+      const geminiService = new GeminiService()
       const result = await geminiService.generatePrompt(businessDetails)
       
       setGeneratedPrompt(result.prompt)
       setSuccess('Prompt generated successfully!')
     } catch (error) {
       console.error('Error generating prompt:', error)
-      setError('Failed to generate prompt. Please check your API key and try again.')
+      setError('Failed to generate prompt. Please try again.')
     } finally {
       setIsGenerating(false)
     }
   }
 
   const testAgent = async () => {
-    if (!apiKeys.vapi || !generatedPrompt) {
-      setError('Please enter your VAPI API key and generate a prompt first')
+    if (!generatedPrompt) {
+      setError('Please generate a prompt first')
       return
     }
 
@@ -140,7 +131,7 @@ const SetupForm = () => {
     setSuccess('')
     
     try {
-      const vapiService = new VapiService(apiKeys.vapi)
+      const vapiService = new VapiService()
       
       // Create a test agent
       const agent = await vapiService.createAgent({
@@ -160,7 +151,7 @@ const SetupForm = () => {
       setSuccess(`Agent created successfully! Agent ID: ${agent.id}`)
     } catch (error) {
       console.error('Error testing agent:', error)
-      setError('Failed to create agent. Please check your API key and try again.')
+      setError('Failed to create agent. Please try again.')
     } finally {
       setIsTesting(false)
     }
@@ -168,48 +159,6 @@ const SetupForm = () => {
 
   return (
     <div className="space-y-6">
-      {/* API Keys Configuration */}
-      <Card className="p-6">
-        <h3 className="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-          <Building className="w-5 h-5 mr-2" />
-          API Configuration
-        </h3>
-        
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              VAPI API Key *
-            </label>
-            <input
-              type="password"
-              value={apiKeys.vapi}
-              onChange={(e) => setApiKeys(prev => ({ ...prev, vapi: e.target.value }))}
-              className="input-field"
-              placeholder="Enter your VAPI API key"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Get your key from <a href="https://vapi.ai" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">vapi.ai</a>
-            </p>
-          </div>
-          
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1">
-              Gemini API Key *
-            </label>
-            <input
-              type="password"
-              value={apiKeys.gemini}
-              onChange={(e) => setApiKeys(prev => ({ ...prev, gemini: e.target.value }))}
-              className="input-field"
-              placeholder="Enter your Gemini API key"
-            />
-            <p className="text-xs text-gray-500 mt-1">
-              Get your key from <a href="https://makersuite.google.com/app/apikey" target="_blank" rel="noopener noreferrer" className="text-primary-600 hover:underline">Google AI Studio</a>
-            </p>
-          </div>
-        </div>
-      </Card>
-
       {/* Error/Success Messages */}
       {error && (
         <div className="flex items-center space-x-2 p-4 bg-red-50 border border-red-200 rounded-lg">
@@ -416,7 +365,7 @@ const SetupForm = () => {
         
         <button
           onClick={generatePrompt}
-          disabled={isGenerating || !businessDetails.businessName || !businessDetails.businessType || !apiKeys.gemini}
+          disabled={isGenerating || !businessDetails.businessName || !businessDetails.businessType}
           className="btn-primary disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {isGenerating ? 'Generating...' : 'Generate AI Prompt'}
@@ -437,7 +386,7 @@ const SetupForm = () => {
             <div className="mt-4 flex space-x-4">
               <button
                 onClick={testAgent}
-                disabled={isTesting || !apiKeys.vapi}
+                disabled={isTesting}
                 className="btn-secondary disabled:opacity-50 disabled:cursor-not-allowed"
               >
                 {isTesting ? 'Testing...' : 'Test AI Agent'}

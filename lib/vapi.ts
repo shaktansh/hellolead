@@ -1,4 +1,6 @@
 // VAPI API Integration for AI Voice Agent
+import { config } from './config'
+
 export interface VapiAgent {
   id: string
   name: string
@@ -26,8 +28,11 @@ class VapiService {
   private apiKey: string
   private baseUrl = 'https://api.vapi.ai'
 
-  constructor(apiKey: string) {
-    this.apiKey = apiKey
+  constructor() {
+    this.apiKey = config.VAPI_API_KEY
+    if (!this.apiKey) {
+      throw new Error('VAPI_API_KEY is not configured')
+    }
   }
 
   // Create a new AI agent
@@ -44,14 +49,14 @@ class VapiService {
           prompt: data.prompt,
           phoneNumber: data.phoneNumber,
           model: {
-            provider: 'openai',
-            model: 'gpt-4',
-            temperature: 0.7,
+            provider: config.DEFAULT_MODEL.provider,
+            model: config.DEFAULT_MODEL.model,
+            temperature: config.DEFAULT_MODEL.temperature,
             systemPrompt: data.prompt,
           },
           voice: {
-            provider: '11labs',
-            voiceId: 'pNInz6obpgDQGcFmaJgB', // Professional female voice
+            provider: config.DEFAULT_VOICE.provider,
+            voiceId: config.DEFAULT_VOICE.voiceId,
           },
           firstMessage: "Hello! Thank you for calling. I'm your AI receptionist. How can I help you today?",
           recordingEnabled: true,
