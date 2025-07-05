@@ -97,7 +97,7 @@ Also provide 3-5 suggestions for improving the prompt based on the business type
       // Parse the response to extract prompt and suggestions
       const lines = generatedText.split('\n')
       const promptText = lines.slice(0, -5).join('\n') // Everything except last 5 lines
-      const suggestions = lines.slice(-5).filter(line => line.trim().startsWith('-')).map(line => line.trim().substring(1).trim())
+      const suggestions = lines.slice(-5).filter((line: string) => line.trim().startsWith('-')).map((line: string) => line.trim().substring(1).trim())
 
       return {
         prompt: promptText,
@@ -148,7 +148,7 @@ Generate professional, specific questions that would help qualify this lead and 
       const data = await response.json()
       const generatedText = data.candidates[0].content.parts[0].text
       
-      return generatedText.split('\n').filter(line => line.trim().startsWith('-')).map(line => line.trim().substring(1).trim())
+      return generatedText.split('\n').filter((line: string) => line.trim().startsWith('-')).map((line: string) => line.trim().substring(1).trim())
     } catch (error) {
       console.error('Error generating follow-up questions:', error)
       throw error
